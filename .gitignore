@@ -1,0 +1,53 @@
+# OS / 편집기 공통
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+*~
+.idea/
+.vscode/
+
+# Git
+.gitignore.swp
+
+# Java / Maven
+java/target/
+java/.settings/
+java/.classpath
+java/.project
+*.class
+*.log
+
+# C++ / C 빌드 산출물
+cpp/build/
+cpp/bin/
+cpp/Debug/
+cpp/Release/
+cpp/CMakeFiles/
+cpp/CMakeCache.txt
+cpp/Makefile
+cpp/cmake_install.cmake
+cpp/compile_commands.json
+
+c/build/
+c/bin/
+c/Debug/
+c/Release/
+c/CMakeFiles/
+c/CMakeCache.txt
+c/Makefile
+c/cmake_install.cmake
+c/compile_commands.json
+
+# 일반 바이너리 / 오브젝트 파일
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.lib
+*.a
+*.pdb
+
