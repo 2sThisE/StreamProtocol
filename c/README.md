@@ -1,53 +1,61 @@
-# Low Level Socket Protocol (C)
+# Low Level Stream Protocol (C)
 
-이 디렉터리는 C 언어용 패킷 인코딩/디코딩 구현입니다.  
-Java/C++ 버전과 동일한 8바이트 헤더 + CRC32 구조를 사용합니다.
+순서가 보장되는 바이트 스트림(예: TCP, TLS 위의 스트림,
+Unix 도메인 소켓, 파이프, 시리얼 링크 등) 위에서
+바이너리 패킷을 인코딩/디코딩하기 위한 C 구현입니다.
 
-## 패킷 구조
+Java / C++ 구현과 동일한 바이너리 포맷을 사용하므로,
+여러 언어 간에 같은 패킷을 주고받을 수 있습니다.
+
+## 프로토콜 개요
 
 ```text
 [ 8바이트 헤더 ][ 페이로드 ][ 4바이트 CRC32 ]
 ```
 
-- 헤더는 64비트 `uint64_t` 값으로 인코딩되며, little-endian 바이트 순서를 사용합니다.
-- 비트 레이아웃:
+- 헤더는 64비트 `uint64_t` 값을 little-endian 으로 표현한 것입니다.
+- 헤더 비트 배열:
   - 비트 0–3  : `protocolVersion` (4비트)
   - 비트 4–48 : `packetLength` (45비트, 헤더 + 페이로드 + CRC 전체 길이)
   - 비트 49   : `fragmentFlag` (1비트)
   - 비트 50–53: `payloadType` (4비트)
   - 비트 54–63: `userField` (10비트)
+- CRC32 는 다항식 `0xEDB88320` 을 사용합니다.
 
-CRC32는 폴리노미얼 `0xEDB88320`를 사용하는 표준 CRC-32 구현입니다.
+## 구성
 
-## 파일 구성
-
-- `include/socketprotocol/SocketProtocol.h`
-  - 퍼블릭 C API 헤더
-- `src/SocketProtocol.c`
-  - 구현 파일
+- `include/streamprotocol/StreamProtocol.h`
+  - C API 선언.
+- `src/StreamProtocol.c`
+  - 구현부.
+- `StreamProtocol_single.h`
+  - 선언과 구현을 하나로 합친 단일 헤더 버전.
 - `examples/main.c`
-  - 간단한 사용 예제 (인코딩 → 디코딩)
+  - 간단한 사용 예제.
 
+## C API 개요
 
-## C API
+헤더 인클루드는 다음과 같습니다.
 
-헤더: `#include "socketprotocol/SocketProtocol.h"`
+```c
+#include "streamprotocol/StreamProtocol.h"
+```
 
-### 상수
+주요 상수:
 
-- `SP_HEADER_SIZE` : 헤더 크기(8바이트)
-- `SP_FRAGED` / `SP_UNFRAGED` : 단편화 플래그 값
+- `SP_HEADER_SIZE` : 헤더 길이 (8바이트)
+- `SP_FRAGED` / `SP_UNFRAGED` : fragment flag 값
 
-### 에러 코드 (`sp_result_t`)
+결과 코드(`sp_result_t`):
 
-- `SP_OK` : 성공
-- `SP_ERR_BUFFER_TOO_SMALL` : 버퍼가 최소 헤더+CRC 길이보다 작음
-- `SP_ERR_PAYLOAD_TOO_LARGE` : 헤더/제한을 초과하는 패킷 크기
-- `SP_ERR_INVALID_ARGUMENT` : 인자 범위 오류 (플래그, 타입, userField 등)
-- `SP_ERR_LENGTH_MISMATCH` : 헤더의 길이 필드와 실제 버퍼 길이 불일치
-- `SP_ERR_CRC_MISMATCH` : CRC32 검증 실패
+- `SP_OK`
+- `SP_ERR_BUFFER_TOO_SMALL`
+- `SP_ERR_PAYLOAD_TOO_LARGE`
+- `SP_ERR_INVALID_ARGUMENT`
+- `SP_ERR_LENGTH_MISMATCH`
+- `SP_ERR_CRC_MISMATCH`
 
-### 파싱 결과 구조체
+파싱 결과 구조체(`sp_parsed_packet_t`):
 
 ```c
 typedef struct sp_parsed_packet_s {
@@ -56,12 +64,12 @@ typedef struct sp_parsed_packet_s {
     uint8_t  fragment_flag;
     uint8_t  payload_type;
     uint16_t user_field;
-    const uint8_t* payload;    /* 입력 패킷 버퍼 내부를 가리킴 */
+    const uint8_t* payload;    /* 원본 패킷 버퍼 내부 포인터 */
     size_t   payload_length;
 } sp_parsed_packet_t;
 ```
 
-### 인코딩 함수
+인코딩 함수:
 
 ```c
 sp_result_t sp_encode_packet(const uint8_t* payload,
@@ -73,10 +81,10 @@ sp_result_t sp_encode_packet(const uint8_t* payload,
                              size_t* out_length);
 ```
 
-- `out_packet` 는 `malloc`으로 할당되며, 사용 후 `free()` 해야 합니다.
-- `sp_encode_packet_limited` 를 사용하면 추가로 `max_packet_size` 제한을 둘 수 있습니다.
+- `out_packet` 은 `malloc` 으로 할당되며, 사용 후 호출자가 `free()` 해야 합니다.
+- `sp_encode_packet_limited` 를 사용하면 최대 패킷 크기를 제한할 수 있습니다.
 
-### 디코딩 함수
+디코딩 함수:
 
 ```c
 sp_result_t sp_parse_packet(const uint8_t* packet,
@@ -84,15 +92,15 @@ sp_result_t sp_parse_packet(const uint8_t* packet,
                             sp_parsed_packet_t* out_packet);
 ```
 
-- `out_packet->payload` 는 입력 `packet` 버퍼 내부를 가리키므로,  
-  `packet`의 생명 주기 동안만 유효합니다.
+- `out_packet->payload` 는 입력 `packet` 버퍼 내부를 가리키므로,
+  `packet` 이 유효한 동안에만 사용해야 합니다.
 
-## 간단한 예제
+## 간단 예제
 
-`examples/main.c` 참고:
+`examples/main.c` 를 참고하면 전체 흐름을 볼 수 있습니다.
 
 ```c
-const char* msg = "Hello, C SocketProtocol!";
+const char* msg = "Hello, C StreamProtocol!";
 uint8_t* packet = NULL;
 size_t packet_len = 0;
 
@@ -110,4 +118,4 @@ sp_parsed_packet_t parsed;
 res = sp_parse_packet(packet, packet_len, &parsed);
 ```
 
-이렇게 하면 Java / C++ 구현과 동일한 형식의 패킷을 C에서 생성/파싱할 수 있습니다.
+이 패킷은 Java/C++ 구현에서 그대로 파싱할 수 있습니다.

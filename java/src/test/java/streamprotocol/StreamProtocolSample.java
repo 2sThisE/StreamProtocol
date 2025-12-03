@@ -1,20 +1,20 @@
-package socketprotocol;
+package streamprotocol;
 
 /**
- * Simple sample showing how to encode and decode a packet using {@link SocketProtocol}.
+ * Simple sample showing how to encode and decode a packet using {@link StreamProtocol}.
  * <p>
  * This is intended as an example for documentation / Git usage and is not used by production code.
  */
-public class SocketProtocolSample {
+public class StreamProtocolSample {
 
     public static void main(String[] args) {
-        SocketProtocol protocol = new SocketProtocol();
+        StreamProtocol protocol = new StreamProtocol();
 
         // Example payload
         byte[] payload = "Hello, TcpHelper!".getBytes();
 
         // Fragment flag and payload type
-        byte fragFlag = SocketProtocol.UNFRAGED;
+        byte fragFlag = StreamProtocol.UNFRAGED;
         byte payloadType = 0x01; // application-defined type (0-15)
         int userField = 42;      // some user metadata (0-1023)
 
@@ -38,4 +38,3 @@ public class SocketProtocolSample {
         System.out.println("Encoded packet with buffer limit, length: " + boundedPacket.length);
     }
 }
-

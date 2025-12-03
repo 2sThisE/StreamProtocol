@@ -6,9 +6,9 @@
 #include <stdexcept>
 #include <limits>
 
-/// 단일 헤더 버전 SocketProtocol C++ 구현입니다.
+/// 단일 헤더 버전 StreamProtocol C++ 구현입니다.
 /// 이 파일 하나만 프로젝트에 포함하면 패킷 인코딩/디코딩을 사용할 수 있습니다.
-namespace socketprotocol {
+namespace streamprotocol {
 
 /// 모든 패킷 관련 예외의 기반 클래스입니다.
 class PacketException : public std::runtime_error {
@@ -80,7 +80,7 @@ public:
 };
 
 /// 8바이트 헤더 + CRC32를 사용하는 패킷 인코더/디코더입니다.
-class SocketProtocol {
+class StreamProtocol {
 private:
     static constexpr size_t HEADER_SIZE = 8;               // 8 bytes
     static constexpr uint64_t MAX_HEADER_LENGTH_VALUE = 0x1FFFFFFFFFFFL; // 45-bit max
@@ -238,5 +238,4 @@ public:
     }
 };
 
-} // namespace socketprotocol
-
+} // namespace streamprotocol

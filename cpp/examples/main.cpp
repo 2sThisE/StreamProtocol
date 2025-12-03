@@ -1,12 +1,12 @@
 ﻿#include <iostream>
-#include "socketprotocol/SocketProtocol.hpp"
+#include "streamprotocol/StreamProtocol.hpp"
 
 int main() {
     try {
-        socketprotocol::SocketProtocol protocol;
+        streamprotocol::StreamProtocol protocol;
 
         std::string message = "HelloPacket!";
-        std::vector<uint8_t> packetBytes = protocol.toBytes(message, socketprotocol::SocketProtocol::UNFRAGED, 0x1f);
+        std::vector<uint8_t> packetBytes = protocol.toBytes(message, streamprotocol::StreamProtocol::UNFRAGED, 0x1f);
 
         std::cout << "Packet encoded! size: " << packetBytes.size() << " bytes" << std::endl;
         std::cout << "Packet (hex): ";
@@ -32,4 +32,3 @@ int main() {
 
     return 0;
 }
-

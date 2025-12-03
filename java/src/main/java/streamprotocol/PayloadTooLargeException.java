@@ -1,4 +1,4 @@
-package socketprotocol;
+package streamprotocol;
 
 public class PayloadTooLargeException extends PacketException {
     public PayloadTooLargeException(long given, long max) {

@@ -1,4 +1,4 @@
-package socketprotocol;
+package streamprotocol;
 
 public class BufferTooSmallException extends PacketException {
     public BufferTooSmallException(long given) {

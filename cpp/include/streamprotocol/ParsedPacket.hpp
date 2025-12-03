@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace socketprotocol {
+namespace streamprotocol {
 
 class ParsedPacket {
 private:
@@ -26,5 +26,4 @@ public:
     const std::vector<uint8_t>& Payload() const { return payloadRaw; }
 };
 
-} // namespace socketprotocol
-
+} // namespace streamprotocol

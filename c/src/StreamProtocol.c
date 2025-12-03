@@ -1,4 +1,4 @@
-#include "socketprotocol/SocketProtocol.h"
+#include "streamprotocol/StreamProtocol.h"
 
 #include <stdlib.h>
 
@@ -184,4 +184,3 @@ sp_result_t sp_parse_packet(const uint8_t* packet,
 
     return SP_OK;
 }
-

@@ -1,8 +1,8 @@
-#include "socketprotocol/SocketProtocol.hpp"
+#include "streamprotocol/StreamProtocol.hpp"
 
-namespace socketprotocol {
+namespace streamprotocol {
 
-uint32_t SocketProtocol::computeCRC32(const uint8_t* data, size_t length) {
+uint32_t StreamProtocol::computeCRC32(const uint8_t* data, size_t length) {
     uint32_t crc = 0xFFFFFFFF;
     for (size_t i = 0; i < length; ++i) {
         crc ^= data[i];
@@ -14,7 +14,7 @@ uint32_t SocketProtocol::computeCRC32(const uint8_t* data, size_t length) {
     return ~crc;
 }
 
-std::vector<uint8_t> SocketProtocol::buildPacket(const uint8_t* data, size_t size, uint8_t payloadType, uint8_t fragFlag, uint16_t userValue) {
+std::vector<uint8_t> StreamProtocol::buildPacket(const uint8_t* data, size_t size, uint8_t payloadType, uint8_t fragFlag, uint16_t userValue) {
     if (data == nullptr) {
         throw std::invalid_argument("payload must not be null");
     }
@@ -69,11 +69,11 @@ std::vector<uint8_t> SocketProtocol::buildPacket(const uint8_t* data, size_t siz
     return packet;
 }
 
-std::vector<uint8_t> SocketProtocol::toBytes(const std::string& payload, uint8_t fragFlag, uint16_t userValue) {
+std::vector<uint8_t> StreamProtocol::toBytes(const std::string& payload, uint8_t fragFlag, uint16_t userValue) {
     return buildPacket(reinterpret_cast<const uint8_t*>(payload.data()), payload.size(), 0x01u, fragFlag, userValue);
 }
 
-std::vector<uint8_t> SocketProtocol::toBytes(const std::string& payload, uint8_t fragFlag, uint16_t userValue, size_t bufferSize) {
+std::vector<uint8_t> StreamProtocol::toBytes(const std::string& payload, uint8_t fragFlag, uint16_t userValue, size_t bufferSize) {
     if (bufferSize < HEADER_SIZE + sizeof(uint32_t)) {
         throw BufferTooSmallException(bufferSize);
     }
@@ -86,7 +86,7 @@ std::vector<uint8_t> SocketProtocol::toBytes(const std::string& payload, uint8_t
     return buildPacket(reinterpret_cast<const uint8_t*>(payload.data()), payload.size(), 0x01u, fragFlag, userValue);
 }
 
-ParsedPacket SocketProtocol::parsePacket(const std::vector<uint8_t>& packetBytes) {
+ParsedPacket StreamProtocol::parsePacket(const std::vector<uint8_t>& packetBytes) {
     if (packetBytes.size() < HEADER_SIZE + sizeof(uint32_t)) {
         throw BufferTooSmallException(packetBytes.size());
     }
@@ -138,12 +138,11 @@ ParsedPacket SocketProtocol::parsePacket(const std::vector<uint8_t>& packetBytes
     return ParsedPacket(protoVersion, packetLength, fragmentFlag, payloadType, userField, std::move(payload));
 }
 
-void SocketProtocol::SetProtocolVersion(uint8_t version) {
+void StreamProtocol::SetProtocolVersion(uint8_t version) {
     if (version > 0x0F) {
         throw std::invalid_argument("Protocol version must be 4 bits (0-15)");
     }
     protocolVersion = version;
 }
 
-} // namespace socketprotocol
-
+} // namespace streamprotocol

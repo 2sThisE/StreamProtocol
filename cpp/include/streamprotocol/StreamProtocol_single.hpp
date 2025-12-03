@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <limits>
 
-namespace socketprotocol {
+namespace streamprotocol {
 
 class PacketException : public std::runtime_error {
 public:
@@ -65,7 +65,7 @@ public:
     const std::vector<uint8_t>& Payload() const { return payloadRaw; }
 };
 
-class SocketProtocol {
+class StreamProtocol {
 private:
     static constexpr size_t HEADER_SIZE = 8;               // 8 bytes
     static constexpr uint64_t MAX_HEADER_LENGTH_VALUE = 0x1FFFFFFFFFFFL; // 45-bit max
@@ -213,5 +213,4 @@ public:
     }
 };
 
-} // namespace socketprotocol
-
+} // namespace streamprotocol

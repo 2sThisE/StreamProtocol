@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "socketprotocol/SocketProtocol.h"
+#include "streamprotocol/StreamProtocol.h"
 
 int main(void) {
-    const char* msg = "Hello, C SocketProtocol!";
+    const char* msg = "Hello, C StreamProtocol!";
     uint8_t* packet = NULL;
     size_t packet_len = 0;
 

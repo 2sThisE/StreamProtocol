@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace socketprotocol {
+namespace streamprotocol {
 
 class PacketException : public std::runtime_error {
 public:
@@ -40,5 +40,4 @@ public:
     }
 };
 
-} // namespace socketprotocol
-
+} // namespace streamprotocol

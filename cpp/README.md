@@ -1,94 +1,86 @@
-# Low Level Socket Protocol (C++)
+# Low Level Stream Protocol (C++)
 
-로우레벨 TCP 패킷 인코딩/디코딩을 위한 C++ 라이브러리입니다.  
-이 디렉터리는 C++ 구현을 담고 있으며, **싱글 헤더 사용**을 기본으로 권장합니다.
+순서가 보장되는 바이트 스트림(예: TCP, TLS 위의 스트림,
+Unix 도메인 소켓, 파이프, 시리얼 링크 등) 위에서
+바이너리 패킷을 인코딩/디코딩하기 위한 C++ 라이브러리입니다.
 
-## 사용 권장 방식: 단일 헤더
+같은 프로토콜을 Java / C 구현과 공유하며,
+헤더 전용(single-header) 버전도 함께 제공합니다.
 
-가장 간단한 사용 방법은 루트에 있는 `SocketProtocol_single.hpp` 파일 **하나만** 프로젝트에 복사해서 쓰는 것입니다.
+## 프로토콜 개요
 
-### 1. 헤더 포함
+Java/C 구현과 동일한 레이아웃을 사용합니다.
+
+```text
+[ 8바이트 헤더 ][ 페이로드 ][ 4바이트 CRC32 ]
+```
+
+- 헤더는 64비트 `uint64_t` 값을 little-endian 으로 표현한 것입니다.
+- 헤더 비트 배열:
+  - 비트 0–3  : `protocolVersion` (4비트)
+  - 비트 4–48 : `packetLength` (45비트, 헤더 + 페이로드 + CRC 전체 길이)
+  - 비트 49   : `fragmentFlag` (1비트)
+  - 비트 50–53: `payloadType` (4비트)
+  - 비트 54–63: `userField` (10비트)
+- CRC32 는 다항식 `0xEDB88320` 을 사용합니다.
+
+## 구성
+
+- `include/streamprotocol/StreamProtocol.hpp`
+  - 메인 C++ 클래스 정의.
+- `include/streamprotocol/ParsedPacket.hpp`
+  - 파싱 결과 DTO.
+- `include/streamprotocol/PacketException.h`
+  - 예외 계층 정의.
+- `src/StreamProtocol.cpp`
+  - 구현부.
+- `StreamProtocol_single.hpp`
+  - 위 헤더/구현을 하나로 합친 단일 헤더 버전.
+- `examples/main.cpp`
+  - 간단한 사용 예제.
+
+## 기본 사용 예제
+
+단일 헤더 버전을 사용하는 간단한 예제입니다.
 
 ```cpp
-#include "SocketProtocol_single.hpp"
+#include "StreamProtocol_single.hpp"
 
 int main() {
-    socketprotocol::SocketProtocol protocol;
+    streamprotocol::StreamProtocol protocol;
 
     std::string message = "HelloPacket!";
-    auto packet = protocol.toBytes(message,
-                                   socketprotocol::SocketProtocol::UNFRAGED,
-                                   42); // userField
+    auto packet = protocol.toBytes(
+        message,
+        streamprotocol::StreamProtocol::UNFRAGED,
+        42  // userField
+    );
 
     auto parsed = protocol.parsePacket(packet);
     std::string extracted(parsed.Payload().begin(), parsed.Payload().end());
 }
 ```
 
-### 2. 패킷 구조
-
-Java 구현과 동일한 포맷을 사용합니다.
-
-```text
-[ 8바이트 헤더 ][ 페이로드 ][ 4바이트 CRC32 ]
-```
-
-- 헤더는 64비트 `uint64_t` 값으로 구성되며, little-endian으로 직렬화됩니다.
-- 비트 레이아웃:
-  - bits 0–3  : `protocolVersion` (4비트)
-  - bits 4–48 : `packetLength` (45비트, 헤더 + 페이로드 + CRC 총 길이)
-  - bit  49   : `fragmentFlag` (1비트)
-  - bits 50–53: `payloadType` (4비트)
-  - bits 54–63: `userField` (10비트)
-
-CRC32는 폴리노미얼 `0xEDB88320`를 사용하는 일반적인 CRC-32 구현입니다.
-
-### 3. API 개요 (싱글 헤더)
-
-`SocketProtocol_single.hpp` 안에는 다음 클래스들이 정의되어 있습니다.
-
-- `socketprotocol::PacketException` 및 파생 예외
-  - `PayloadTooLargeException`
-  - `BufferTooSmallException`
-  - `PacketSizeMismatch`
-  - `InvalidCRCException`
-- `socketprotocol::ParsedPacket`
-  - 헤더 필드와 페이로드를 조회하는 getter 제공
-- `socketprotocol::SocketProtocol`
-  - `std::vector<uint8_t> toBytes(const std::string& payload, uint8_t fragFlag = UNFRAGED, uint16_t userValue = 0);`
-  - `std::vector<uint8_t> toBytes(const std::vector<uint8_t>& payload, uint8_t fragFlag = UNFRAGED, uint16_t userValue = 0);`
-  - `ParsedPacket parsePacket(const std::vector<uint8_t>& packetBytes);`
-
-각 메서드는 다음과 같은 방어 로직을 포함합니다.
-
-- `payload == nullptr` → `std::invalid_argument`
-- `fragFlag`가 `FRAGED` / `UNFRAGED`가 아닌 경우 → `std::invalid_argument`
-- `payloadType`이 0~15 범위를 벗어난 경우 → `std::invalid_argument`
-- `userField`가 0~1023 범위를 벗어난 경우 → `std::invalid_argument`
-- 패킷 총 길이가 헤더가 표현 가능한 최대값을 넘어가는 경우 → `PayloadTooLargeException`
-- 수신 패킷이 헤더+CRC 최소 길이보다 짧은 경우 → `BufferTooSmallException`
-- 헤더의 길이 필드와 실제 버퍼 길이가 다른 경우 → `PacketSizeMismatch`
-- CRC 검증 실패 → `InvalidCRCException`
-
-## 대안: include/src 구조 사용
-
-보다 전통적인 라이브러리 구조로 사용하고 싶다면, 다음 폴더들을 포함해서 프로젝트에 추가할 수 있습니다.
-
-- `include/socketprotocol/PacketException.h`
-- `include/socketprotocol/ParsedPacket.hpp`
-- `include/socketprotocol/SocketProtocol.hpp`
-- `src/SocketProtocol.cpp`
-
-이 경우에는 다음과 같이 포함하여 사용합니다.
+또는 `include/` + `src/` 를 함께 사용하는 일반적인 형태로도 사용할 수 있습니다.
 
 ```cpp
-#include "socketprotocol/SocketProtocol.hpp"
+#include "streamprotocol/StreamProtocol.hpp"
 
 int main() {
-    socketprotocol::SocketProtocol protocol;
+    streamprotocol::StreamProtocol protocol;
     // ...
 }
 ```
 
-싱글 헤더 버전과 동일한 비트 레이아웃과 예외 처리 규칙을 따릅니다.
+## 빌드 예시
 
+예제 프로그램을 간단히 빌드하려면 (GCC/Clang 기준):
+
+```bash
+cd cpp
+g++ -std=c++17 -Iinclude examples/main.cpp src/StreamProtocol.cpp -o streamprotocol_example
+./streamprotocol_example
+```
+
+실제 프로젝트에서는 `include/` 를 헤더 검색 경로에 추가하고,
+`src/StreamProtocol.cpp` 를 함께 컴파일/링크하면 됩니다.

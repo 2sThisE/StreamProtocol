@@ -1,4 +1,4 @@
-package socketprotocol;
+package streamprotocol;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -20,7 +20,11 @@ import java.util.zip.CRC32;
  *     <li>비트 54-63: userField (10비트)</li>
  * </ul>
  */
-public class SocketProtocol {
+public class StreamProtocol {
+
+    // NOTE: 이 구현은 TCP에 한정되지 않고,
+    // 순서가 보장되는 모든 바이트 스트림(예: TCP, TLS 스트림,
+    // Unix 도메인 소켓, 파이프, 시리얼 링크 등)에서 사용할 수 있습니다.
 
     private byte protocolVersion = 1; // Default protocol version (4-bit, 0-15)
 

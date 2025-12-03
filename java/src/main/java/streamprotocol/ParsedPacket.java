@@ -1,9 +1,9 @@
-package socketprotocol;
+package streamprotocol;
 
 /**
  * 파싱된 패킷을 표현하는 불변 객체입니다.
  * <p>
- * {@link SocketProtocol#parsePacket(byte[])} 호출 결과로 생성되며,
+ * {@link StreamProtocol#parsePacket(byte[])} 호출 결과로 생성되며,
  * 헤더 필드와 원본 페이로드 바이트를 제공합니다.
  */
 public class ParsedPacket {
@@ -19,7 +19,7 @@ public class ParsedPacket {
      *
      * @param protocolVersion 헤더에서 추출된 프로토콜 버전 (0~15)
      * @param packetLength    전체 패킷 길이 (바이트 단위, 헤더 + 페이로드 + CRC)
-     * @param fragmentFlag    단편화 플래그 ({@link SocketProtocol#FRAGED} / {@link SocketProtocol#UNFRAGED})
+     * @param fragmentFlag    단편화 플래그 ({@link StreamProtocol#FRAGED} / {@link StreamProtocol#UNFRAGED})
      * @param payloadType     논리적 페이로드 타입 (0~15)
      * @param userField       사용자 필드 값 (0~1023)
      * @param payloadRaw      원본 페이로드 바이트 (null 아님)

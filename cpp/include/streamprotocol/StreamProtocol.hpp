@@ -8,9 +8,9 @@
 #include "PacketException.h"
 #include "ParsedPacket.hpp"
 
-namespace socketprotocol {
+namespace streamprotocol {
 
-class SocketProtocol {
+class StreamProtocol {
 private:
     static constexpr size_t HEADER_SIZE = 8;               // 8 bytes
     static constexpr uint64_t MAX_HEADER_LENGTH_VALUE = 0x1FFFFFFFFFFFL; // 45-bit max
@@ -37,5 +37,4 @@ public:
     void SetProtocolVersion(uint8_t version);
 };
 
-} // namespace socketprotocol
-
+} // namespace streamprotocol
